@@ -14,6 +14,7 @@ cargo build --release
 ./target/release/radscanner
 ```
 ## Docker
+NOTE: **The docker image is currently NOT working 100%. Working on fixing it right now.**
 ```
 docker build -t radscanner .
 docker create --name radscanner radscanner
