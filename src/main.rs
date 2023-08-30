@@ -43,7 +43,7 @@ async fn main() {
     let mut data: Vec<MinecraftServer> = vec![];
 
     for (i, ip) in ips.iter().enumerate() {
-        if i == ips.len() -1 {
+        if i == ips.len() {
             println!("Successfully scanned all IPs! Exiting now...");
             std::process::exit(0);
         }
