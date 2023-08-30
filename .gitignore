@@ -1,4 +1,3 @@
 /target
 /.fleet
-/Cargo.lock
 /output.json
