@@ -6,6 +6,8 @@ This is essentially my rust learning Project.
 # Usage
 Configure config.toml to your liking.
 
+Put the list of IPs into your configured `input_file` (seperated by a newline)
+
 ## Compiling manually
 ```
 cargo build --release
