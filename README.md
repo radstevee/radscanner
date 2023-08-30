@@ -13,9 +13,11 @@ Put the list of IPs into your configured `input_file` (seperated by a newline)
 cargo build --release
 ./target/release/radscanner
 ```
+or
+```
+cargo run
+```
+## Using binary
+just ./radscanner, I'm not gonna explain that, you should know how to do that lol
 ## Docker
-NOTE: **The docker image is currently NOT working 100%. Working on fixing it right now.**
-```
-docker build -t radscanner .
-docker create --name radscanner radscanner
-```
+make your own and submit a pull request, I'm too dumb :)
