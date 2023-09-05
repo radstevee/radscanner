@@ -1,0 +1,38 @@
+networks:
+    web:
+        external: true
+    internal:
+        external: false
+
+services:
+    scanner:
+        volumes:
+            - ./config.toml:/usr/src/radscanner/config.toml:ro
+        build: .
+        networks:
+            - internal
+    db:
+        image: mongo
+        restart: always
+        environment:
+            MONGO_INITDB_DATABASE: radscanner
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: password # change this, no mongo formatting
+        networks:
+             - internal
+    frontend:
+        image: mongo-express
+        restart: always
+        ports:
+           - 8081:8081
+        environment:
+            # change these to your own values
+            ME_CONFIG_BASICAUTH_USERNAME: radsteve # username for website authentication
+            ME_CONFIG_BASICAUTH_PASSWORD: password # no mongo formatting
+            ME_CONFIG_MONGODB_ENABLE_ADMIN: true
+            ME_CONFIG_MONGODB_ADMINUSERNAME: root
+            ME_CONFIG_MONGODB_ADMINPASSWORD: password # no mongo formatting
+            ME_CONFIG_MONGODB_URL: mongodb://root:password@db:27017/ # *with* mongo formatting
+        networks:
+            - web
+            - internal

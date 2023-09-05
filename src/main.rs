@@ -1,30 +1,38 @@
+mod db;
+
+use bson::doc;
 use colored::Colorize;
 use config::Config;
-use elytra_ping::parse::{ServerDescription, ServerPlayers};
-use elytra_ping::{ping_or_timeout, PingError, ServerPingInfo};
-use serde::{Deserialize, Serialize};
+use core::panic;
+use elytra_ping::{ping_or_timeout, JavaServerInfo, PingError};
+use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::fs::File;
-use std::io::Write;
 use tokio::time::Duration;
+use std::error::Error;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize)]
 pub struct MinecraftServer {
     pub ip: String,
     pub version: String,
-    pub playerdata: Option<ServerPlayers>,
-    pub motd: ServerDescription,
+    pub playerdata: Option<elytra_ping::parse::ServerPlayers>,
+    pub motd: String,
 }
 
-#[derive(Debug)]
+#[derive(Serialize)]
+struct PlayerDataBson {
+    online: u32,
+    max: u32,
+}
+
 enum ServerResult {
     Success(MinecraftServer),
     Failure(PingError),
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error>> {
+    // load config
     let cfg = Config::builder()
         .add_source(config::File::with_name("config"))
         .build()
@@ -32,16 +40,33 @@ async fn main() {
 
     let config = cfg.try_deserialize::<HashMap<String, String>>().unwrap();
 
-    clear_file(config.get("output_file").unwrap().to_string());
+    //let url_suffix = "radscanner?retryWrites=true&w=majority";
+    let url_suffix = "";
+
+    let connection_uri = format!(
+        "mongodb://{}:{}@{}/{}",
+        config.get("mongo_root_username").unwrap(),
+        config.get("mongo_root_passwd").unwrap(),
+        config.get("mongo_hostname").unwrap(),
+        url_suffix
+    );
+
+    let _init = db::init(
+        connection_uri.to_string(),
+        config.get("mongo_newuser_passwd").unwrap().to_string(),
+    )
+    .await;
 
     let iplist = fs::read_to_string(config.get("iplist_file").unwrap());
 
-    let iplist_str = iplist.unwrap().to_string();
+    let ips: Vec<String> = iplist
+        .unwrap()
+        .to_string()
+        .lines()
+        .map(|s| s.to_string())
+        .collect(); // convert the lines with all ips to a vector
 
-    let ips: Vec<String> = iplist_str.lines().map(|s| s.to_string()).collect();
-
-    let mut data: Vec<MinecraftServer> = vec![];
-
+    // now here comes the fun part: actually iterate over all ips and scan them
     for (i, ip) in ips.iter().enumerate() {
         if i == ips.len() {
             println!("Successfully scanned all IPs! Exiting now...");
@@ -53,6 +78,7 @@ async fn main() {
         let res = ping_server(
             ip_clone.clone(),
             config_clone.get("port").unwrap().parse::<u16>().unwrap(),
+            // yes, it takes this much code to parse the timeout to u64.
             Duration::from_millis(
                 config_clone
                     .get("timeout_ms")
@@ -65,6 +91,7 @@ async fn main() {
 
         match res {
             Ok(result) => match result {
+                // test if there's actually a positive result
                 ServerResult::Success(server) => {
                     println!(
                         "{} {}",
@@ -72,14 +99,17 @@ async fn main() {
                         "is a minecraft server!".bright_green()
                     );
 
-                    data.push(server);
-
-                    let data_json = serde_json::to_string_pretty(&data).unwrap();
-
-                    let mut file = File::create("output.json");
-                    write!(file.expect("Cannot write output to JSON."), "{}", data_json);
+                    let servers_collection = db::get_servers_collection(connection_uri.clone()).await;
+                    match servers_collection {
+                        Ok(servers_collection) => {
+                            servers_collection.insert_one(server, None).await?;
+                        }
+                        Err(err) => {
+                            panic!("Error: {}", err);
+                        }
+                    }
                 }
-                ServerResult::Failure(err) => {
+                ServerResult::Failure(_err) => {
                     eprintln!(
                         "{} {}",
                         ip.to_string().red(),
@@ -92,6 +122,8 @@ async fn main() {
             }
         }
     }
+
+    Ok(())
 }
 
 async fn ping_server(
@@ -100,17 +132,15 @@ async fn ping_server(
     timeout: Duration,
 ) -> Result<ServerResult, Box<dyn std::error::Error + Send + Sync>> {
     let ip_clone = ip.clone();
-    let res: Result<(ServerPingInfo, Duration), PingError> =
+    let res: Result<(JavaServerInfo, Duration), PingError> =
         ping_or_timeout((ip, port), timeout).await;
-
-    //println!("{:#?}", res);
 
     let server: MinecraftServer = match res {
         Ok((info, _)) => MinecraftServer {
             ip: ip_clone,
             version: info.version.clone().unwrap().name,
             playerdata: info.players.clone(),
-            motd: info.description,
+            motd: info.description.text,
         },
         Err(e) => return Ok(ServerResult::Failure(e)),
     };
@@ -118,12 +148,29 @@ async fn ping_server(
     Ok(ServerResult::Success(server))
 }
 
-fn clear_file(file: String) -> std::io::Result<()> {
-    // Open the file in write mode to truncate its contents
-    let file = File::create(file)?;
+/* fn convert_server_to_bson(server: &MinecraftServer) -> Document {
+    let mut doc = Document::new();
 
-    // Truncate the file by setting its length to 0
-    file.set_len(0)?;
+    doc.insert("ip", &server.ip);
+    doc.insert("version", &server.version);
 
-    Ok(())
-}
+    // Serialize the playerdata field as a custom type
+    if let Some(playerdata) = &server.playerdata {
+        let playerdata_as_bson = PlayerDataBson {
+            online: playerdata.online,
+            max: playerdata.max,
+        };
+
+        // Serialize playerdata_as_bson to BSON
+        let playerdata_bson = bson::to_bson(&playerdata_as_bson).unwrap_or(Bson::Null);
+
+        // Insert the BSON into the document
+        doc.insert("playerdata", playerdata_bson);
+    } else {
+        doc.insert("playerdata", bson::Bson::Null);
+    }
+
+    doc.insert("motd", &server.motd);
+
+    doc
+} */
