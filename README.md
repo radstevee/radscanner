@@ -69,14 +69,14 @@ Whenever I say "format accordingly", follow [this guide](https://www.mongodb.com
 
 Then run
 ```
-docker-compose up db
+docker-compose up -d db
 ```
 
 Wait a couple of seconds *after* it has finished pulling (30-60 seconds on first run)
 
 And then start up everything else with
 ```
-docker-compose up
+docker-compose up -d
 ```
 
 Note that this might take up to ~5 minutes to build, depending on your machine and internet connection.
