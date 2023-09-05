@@ -69,6 +69,13 @@ Whenever I say "format accordingly", follow [this guide](https://www.mongodb.com
 
 Then run
 ```
+docker-compose up db
+```
+
+Wait a couple of seconds *after* it has finished pulling (30-60 seconds on first run)
+
+And then start up everything else with
+```
 docker-compose up
 ```
 
