@@ -68,7 +68,14 @@ You can format your passwords and usernames [here](https://www.charset.org/url-e
 
 Then run
 ```
-docker-compose up
+docker-compose up -d db
+```
+
+Wait a couple of seconds *after* it has finished pulling (30-60 seconds on first run)
+
+And then start up everything else with
+```
+docker-compose up -d
 ```
 
 Note that this might take up to ~5 minutes to build, depending on your machine and internet connection.
@@ -81,3 +88,7 @@ Note that this might take up to ~5 minutes to build, depending on your machine a
 - Submit an Issue, I'll have a look.
 
 - Send me a PM on Discord (`@radstevee`)
+- Run
+```
+docker compose up --build -d
+```
