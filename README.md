@@ -1,7 +1,7 @@
 # radscanner
 
 You've somehow landed on my pretty-much-alpha version of a Minecraft server scanner.
-This is essentially my rust learning Project.
+This is essentially my rust learning Project. Capable of scanning ~10000 IPs/h on my 100Mbit/s connection.
 
 # Usage
 ```
