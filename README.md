@@ -16,7 +16,11 @@ You need a MongoDB instance running, in this case it comes with the docker-compo
 
 
 ## Docker
-Change the `docker-compose.yml`: 
+First up, create the network: 
+```
+docker network create web
+```
+Then change the `docker-compose.yml`:
 ```
 services:
     scanner:
