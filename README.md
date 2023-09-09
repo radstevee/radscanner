@@ -64,8 +64,7 @@ mongo_root_passwd = "password" # format this accordingly
 mongo_newuser_passwd = "password" # no need to format accordingly, password for a *new, created* user
 ```
 
-Whenever I say "format accordingly", follow [this guide](https://www.mongodb.com/docs/manual/reference/connection-string/#std-label-connections-standard-connection-string-format) and also [this guide](https://www.w3schools.com/tags/ref_urlencode.asp?_sm_au_=iVVDMg0TSmrMV6Dm).
-
+You can format your passwords and usernames [here](https://www.charset.org/url-encode).
 
 Then run
 ```

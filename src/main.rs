@@ -3,6 +3,7 @@ mod db;
 use bson::doc;
 use colored::Colorize;
 use config::Config;
+use webhook::client::WebhookClient;
 use core::panic;
 use elytra_ping::{ping_or_timeout, JavaServerInfo, PingError};
 use serde::Serialize;
@@ -40,7 +41,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let config = cfg.try_deserialize::<HashMap<String, String>>().unwrap();
 
-    //let url_suffix = "radscanner?retryWrites=true&w=majority";
     let url_suffix = "";
 
     let connection_uri = format!(
@@ -94,10 +94,49 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 // test if there's actually a positive result
                 ServerResult::Success(server) => {
                     println!(
-                        "{} {}",
+                        "{} {} {}{}{}",
                         &ip.to_string().bright_green(),
-                        "is a minecraft server!".bright_green()
+                        "is a minecraft server!".bright_green(),
+                        (i + 1).to_string().bright_green(),
+                        "/".to_string().bright_green(),
+                        ips.len().to_string().bright_green()
                     );
+
+                    //send an embed to the webhook
+                    if config.get("discord_webhook").unwrap() == "true" {
+                        let client = WebhookClient::new(config.get("discord_webhook_url").unwrap());
+
+                        let online_players: &str = &format!("{}", &server.playerdata.clone().expect("Error: playerdata not found").online);
+                        let max_players: &str = &format!("{}", &server.playerdata.clone().expect("Error: playerdata not found").max);
+                        
+                        let mut sample_players: String = "".to_string();
+                        let player_sample = &server.playerdata.clone().expect("Error: playerdata not found").sample.clone();
+                        
+                        for p in player_sample.iter() {
+                            for player in p {
+                                let player_name = player.name.as_ref().unwrap();
+                                sample_players.push_str(&format!("{}\n", &player_name));
+                                //sample_players = &format!("{}\n{}", sample_players, player.name.unwrap());
+                            }
+                        }
+
+                        if sample_players == "".to_string() {
+                            sample_players = "Nobody is online.".to_string();
+                        }
+
+                        let _ = client.send(|message| message
+                            .username("radscanner")
+                            .embed(|embed| embed
+                                .title("Server found!")
+                                .footer("radscanner - the fast server scanner", None)
+                                .field("IP", ip, false)
+                                .field("MOTD", &server.motd, false)
+                                .field("Version", &server.version, false)
+                                .field("Players online", online_players, false)
+                                .field("Max players", max_players, false)
+                                .field("Player sample", &sample_players, false)
+                            )).await;
+                    }
 
                     let servers_collection = db::get_servers_collection(connection_uri.clone()).await;
                     match servers_collection {
@@ -111,9 +150,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
                 ServerResult::Failure(_err) => {
                     eprintln!(
-                        "{} {}",
+                        "{} {} {}{}{}",
                         ip.to_string().red(),
-                        "is not a minecraft server.".red()
+                        "is not a minecraft server.".red(),
+                        (i + 1).to_string().red(),
+                        "/".to_string().red(),
+                        ips.len().to_string().red()
                     );
                 }
             },
