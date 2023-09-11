@@ -3,14 +3,13 @@ mod db;
 use bson::doc;
 use colored::Colorize;
 use config::Config;
-use webhook::client::WebhookClient;
-use core::panic;
 use elytra_ping::{ping_or_timeout, JavaServerInfo, PingError};
 use serde::Serialize;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs;
 use tokio::time::Duration;
-use std::error::Error;
+use webhook::client::WebhookClient;
 
 #[derive(Serialize)]
 pub struct MinecraftServer {
@@ -106,36 +105,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     if config.get("discord_webhook").unwrap() == "true" {
                         let client = WebhookClient::new(config.get("discord_webhook_url").unwrap());
 
-                        let online_players: &str = &format!("{}", &server.playerdata.clone().expect("Error: playerdata not found").online);
-                        let max_players: &str = &format!("{}", &server.playerdata.clone().expect("Error: playerdata not found").max);
-                        
-                        let mut sample_players: String = "".to_string();
-                        let player_sample = &server.playerdata.clone().expect("Error: playerdata not found").sample.clone();
-                        
-                        for p in player_sample.iter() {
-                            for player in p {
-                                let player_name = player.name.as_ref().unwrap();
-                                sample_players.push_str(&format!("{}\n", &player_name));
-                                //sample_players = &format!("{}\n{}", sample_players, player.name.unwrap());
+                        let mut online_players = "0".to_string();
+                        let mut max_players = "0".to_string();
+                        let mut sample_players = "Nobody is online.".to_string();
+
+                        if let Some(playerdata) = &server.playerdata {
+                            online_players = playerdata.online.to_string();
+                            max_players = playerdata.max.to_string();
+
+                            sample_players = "".to_string();
+
+                            // add each player's name to a string, *try* to avoid errors, i'm not very good at this tho...
+                            if let Some(player_sample) = &playerdata.sample {
+                                for p in player_sample.iter() {
+                                    if let Some(player_name) = &p.name {
+                                        sample_players.push_str(&format!("{}\n", player_name));
+                                    }
+                                }
+                            }
+
+                            if sample_players.is_empty() {
+                                sample_players = "Nobody is online.".to_string();
                             }
                         }
 
-                        if sample_players == "".to_string() {
-                            sample_players = "Nobody is online.".to_string();
-                        }
-
-                        let _ = client.send(|message| message
-                            .username("radscanner")
-                            .embed(|embed| embed
-                                .title("Server found!")
-                                .footer("radscanner - the fast server scanner", None)
-                                .field("IP", ip, false)
-                                .field("MOTD", &server.motd, false)
-                                .field("Version", &server.version, false)
-                                .field("Players online", online_players, false)
-                                .field("Max players", max_players, false)
-                                .field("Player sample", &sample_players, false)
-                            )).await;
+                        let _ = client
+                            .send(|message| {
+                                message.username("radscanner").embed(|embed| {
+                                    embed
+                                        .title("Server found!")
+                                        .footer("radscanner - the fast server scanner", None)
+                                        .field("IP", ip, false)
+                                        .field("MOTD", &server.motd, false)
+                                        .field("Version", &server.version, false)
+                                        .field("Players online", &online_players, false)
+                                        .field("Max players", &max_players, false)
+                                        .field("Player sample", &sample_players, false)
+                                })
+                            })
+                            .await;
                     }
 
                     let servers_collection = db::get_servers_collection(connection_uri.clone()).await;

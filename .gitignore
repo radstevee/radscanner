@@ -1,3 +1,5 @@
 /target
 /.fleet
+/.vscode
 /output.json
+/test_ips.txt

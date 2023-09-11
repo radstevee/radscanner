@@ -3,8 +3,9 @@
 You've somehow landed on my pretty-much-alpha version of a Minecraft server scanner.
 This is essentially my rust learning Project.
 
-# Usage
-```
+## Usage
+
+```sh
 git clone https://github.com/radstevee/radscanner.git
 ```
 
@@ -14,10 +15,11 @@ Put the list of IPs into your configured `input_file` (seperated by a newline)
 
 You need a MongoDB instance running, in this case it comes with the docker-compose.
 
-
 ## Docker
-Change the `docker-compose.yml`: 
-```
+
+Change the `docker-compose.yml`:
+
+```yaml
 services:
     scanner:
         volumes:
@@ -54,9 +56,9 @@ services:
 
 (technically it doesn't actually have to be changed since they are on an internal network, but please do it anyways.)
 
-Change the `config.toml`: 
+Change the `config.toml`:
 
-```
+```toml
 mongo_hostname = "db" # hostname of the mongodb instance (leave this like this if using docker-compose)
 mongo_root_username = "root"
 mongo_root_passwd = "password" # format this accordingly
@@ -67,20 +69,23 @@ mongo_newuser_passwd = "password" # no need to format accordingly, password for 
 You can format your passwords and usernames [here](https://www.charset.org/url-encode).
 
 Then run
-```
+
+```sh
 docker-compose up -d db
 ```
 
 Wait a couple of seconds *after* it has finished pulling (30-60 seconds on first run)
 
 And then start up everything else with
-```
+
+```sh
 docker-compose up -d
 ```
 
 Note that this might take up to ~5 minutes to build, depending on your machine and internet connection.
 
-# Troubleshooting
+## Troubleshooting
+
 - Check if the MongoDB formatting is correct. This is one of the most common mistakes.
 
 - Look at the logs with `docker-compose logs`
@@ -89,6 +94,7 @@ Note that this might take up to ~5 minutes to build, depending on your machine a
 
 - Send me a PM on Discord (`@radstevee`)
 - Run
-```
+
+```sh
 docker compose up --build -d
 ```

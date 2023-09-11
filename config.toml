@@ -1,6 +1,6 @@
-port = 25565 # set this to the port you want to scan
-iplist_file = "./hetzner_ips.txt" # file with your list of ips to scan (seperated by a new line or \n)
-timeout_ms = 500 # time in ms until it times out
+port = 25565 # set this to the minecraft port
+iplist_file = "./INSERT_YOUR_FILE.txt" # file with your list of ips to scan (seperated by a new line or \n)
+timeout_ms = 250 # time in ms until it times out
 
 mongo_hostname = "db" # hostname of the mongodb instance (leave this like this if using docker-compose)
 mongo_root_username = "root"
@@ -8,5 +8,5 @@ mongo_root_passwd = "password" # format this accordingly
 
 mongo_newuser_passwd = "password" # no need to format accordingly, password for a *new, created* user
 
-discord_webhook = true # toggle for discord integration with webhooks
+discord_webhook = false # toggle for discord integration with webhooks
 discord_webhook_url = "" # discord webhook url, leave empty if not using it
