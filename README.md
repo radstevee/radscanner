@@ -1,7 +1,7 @@
 # radscanner
 
 You've somehow landed on my pretty-much-alpha version of a Minecraft server scanner.
-This is essentially my rust learning Project.
+This is essentially my rust learning Project. Capable of scanning ~10000 IPs/h (on my 100Mbit/s connection).
 
 ## Usage
 
@@ -16,6 +16,14 @@ Put the list of IPs into your configured `input_file` (seperated by a newline)
 You need a MongoDB instance running, in this case it comes with the docker-compose.
 
 ## Docker
+
+First up, create the network:
+
+```sh
+docker network create web
+```
+
+Then change the `docker-compose.yml`:
 
 Change the `docker-compose.yml`:
 
