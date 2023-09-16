@@ -117,6 +117,13 @@ With the projection just being `{}`.
 
 And that should query the DB for the LiveOverflow Let's Play if it has already been found.
 
+## Todo
+
+- [ ] *Custom* Web UI
+- [ ] Banner output instead of Log-spam
+- [ ] Progress in percent
+- [ ] Logging in to the servers (via matdoesdev/azalea)
+
 ## Troubleshooting
 
 - Check if the MongoDB formatting is correct. This is one of the most common mistakes.
