@@ -92,6 +92,31 @@ docker-compose up -d
 
 Note that this might take up to ~5 minutes to build, depending on your machine and internet connection.
 
+## Usage of Mongo express
+
+Navigate to `localhost:8081` (of course replace localhost with the IP and 8081 with a different port if you changed it).
+
+Log in with the Basic auth credentials from the `docker-compose.yml`.
+
+Navigate to radscanner/servers
+
+And there you go! Found servers will be saved in there.
+
+Extra note: If you're looking for the LiveOverflow Let's Play, use this advanced search query:
+
+```json
+{
+   "version": "Paper 1.19.2",
+   "playerdata.max": { "$eq": 50 },
+   "playerdata.online": { "$gte": 40 },
+   "motd": "A Minecraft Server"
+}
+```
+
+With the projection just being `{}`.
+
+And that should query the DB for the LiveOverflow Let's Play if it has already been found.
+
 ## Troubleshooting
 
 - Check if the MongoDB formatting is correct. This is one of the most common mistakes.
